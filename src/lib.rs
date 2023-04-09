@@ -32,9 +32,18 @@ fn hide(manager: State<'_, spotlight::SpotlightManager>, window: Window<Wry>) ->
     manager.hide(&window).map_err(|err| format!("{:?}", err))
 }
 
+#[tauri::command]
+fn position_window_at_the_center_of_the_monitor_with_cursor(_window: Window<Wry>) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    spotlight::position_window_at_the_center_of_the_monitor_with_cursor(&_window).map_err(|err| format!("{:?}", err));
+    #[cfg(not(target_os = "macos"))]
+    println!("position_window_at_the_center_of_the_monitor_with_cursor is only available on macOS");
+    Ok(())
+}
+
 pub fn init(spotlight_config: Option<PluginConfig>) -> TauriPlugin<Wry, Option<PluginConfig>> {
     Builder::<Wry, Option<PluginConfig>>::new("spotlight")
-        .invoke_handler(tauri::generate_handler![show, hide])
+        .invoke_handler(tauri::generate_handler![show, hide, position_window_at_the_center_of_the_monitor_with_cursor])
         .setup_with_config(|app, config| {
             app.manage(spotlight::SpotlightManager::new(
                 PluginConfig::merge(
